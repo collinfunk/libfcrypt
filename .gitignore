@@ -1,0 +1,16 @@
+
+*.swp
+tags
+
+*.o
+*.d
+*.a
+*.so
+*.so.*
+
+*.gch
+
+*.elf
+*.bin
+*.out
+
