@@ -1,16 +1,40 @@
 
-*.swp
+*~
+.swp
 tags
 
+# C objects and libraries
 *.o
-*.d
 *.a
 *.so
 *.so.*
 
+# Precompiled headers
 *.gch
+*.pch
 
-*.elf
-*.bin
+# Executables
 *.out
+*.bin
+*.elf
+
+# Autoconf
+autom4te.cache
+aclocal.m4
+/compile
+/config.log
+/config.status
+/configure
+/depcomp
+/install-sh
+/missing
+
+# Automake
+Makefile.in
+/ar-lib
+.deps/
+.dirstamp
+
+# Generated Makefiles
+Makefile
 
