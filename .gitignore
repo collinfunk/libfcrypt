@@ -38,3 +38,8 @@ Makefile.in
 # Generated Makefiles
 Makefile
 
+test-arc4
+test-sha1
+test-sha256
+test-sha512
+

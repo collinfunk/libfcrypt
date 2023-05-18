@@ -23,20 +23,35 @@
  * SUCH DAMAGE.
  */
 
-#ifndef ARC4_H
-#define ARC4_H
+#ifndef SHA512_H
+#define SHA512_H
 
 #include <stddef.h>
 #include <stdint.h>
 
-struct arc4_ctx {
-	uint8_t state[256];
-	uint8_t i;
-	uint8_t j;
+#define SHA512_DIGEST_SIZE 64
+#define SHA512_BLOCK_SIZE 128
+
+#define SHA384_DIGEST_SIZE 48
+#define SHA384_BLOCK_SIZE 128
+
+struct sha512_ctx {
+	uint64_t state[8];                   /* Hash state */
+	uint64_t count[2];                   /* Number of bits mod 2^128 */
+	uint8_t buffer[SHA512_BLOCK_SIZE];   /* Input buffer */
 };
 
-void arc4_set_key(struct arc4_ctx *, const uint8_t *, size_t);
-void arc4_crypt(struct arc4_ctx *, const uint8_t *, uint8_t *, size_t);
+/* SHA-512 */
+void sha512_init(struct sha512_ctx *);
+void sha512_transform(uint64_t *, const uint8_t *);
+void sha512_update(struct sha512_ctx *, const void *, size_t);
+void sha512_final(uint8_t *, struct sha512_ctx *);
 
-#endif /* ARC4_H */
+/* SHA-384 */
+void sha384_init(struct sha512_ctx *);
+void sha384_transform(uint64_t *, const uint8_t *);
+void sha384_update(struct sha512_ctx *, const void *, size_t);
+void sha384_final(uint8_t *, struct sha512_ctx *);
+
+#endif /* SHA512_H */
 
