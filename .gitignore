@@ -2,6 +2,7 @@
 *~
 .swp
 tags
+*.tar.gz
 
 # C objects and libraries
 *.o
@@ -38,8 +39,10 @@ Makefile.in
 # Generated Makefiles
 Makefile
 
+# Should just build these in a subdirectory
 test-arc4
 test-sha1
 test-sha256
 test-sha512
+test-tiger
 
