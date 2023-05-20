@@ -50,10 +50,6 @@ Makefile.in
 Makefile
 
 # Should just build these in a subdirectory
-test-arc4
-test-md5
-test-sha1
-test-sha256
-test-sha512
-test-tiger
+test-*
+!test-*.c
 
