@@ -2,20 +2,46 @@
 AM_CFLAGS = -I$(top_srcdir)/
 
 noinst_LIBRARIES = libfcrypt.a
-libfcrypt_a_SOURCES = arc4.c md4.c md5.c sha1.c sha256.c sha512.c tiger.c
-include_HEADERS = arc4.h bswap.h circularshift.h md4.h md5.h sha1.h \
-		  sha256.h sha512.h tiger.h
+libfcrypt_a_SOURCES = arc4.c \
+		      blowfish.c \
+		      md4.c \
+		      md5.c \
+		      sha1.c \
+		      sha256.c \
+		      sha512.c \
+		      tiger.c
+
+include_HEADERS = arc4.h \
+		  blowfish.h \
+		  bswap.h \
+		  circularshift.h \
+		  md4.h \
+		  md5.h \
+		  sha1.h \
+		  sha256.h \
+		  sha512.h \
+		  tiger.h
 
 dist_doc_DATA = README LICENSE
 
-# ./configure --build-tests
-if BUILD_TESTS
+test_executables = test-arc4 \
+		   test-blowfish \
+		   test-md4 \
+		   test-md5 \
+		   test-sha1 \
+		   test-sha256 \
+		   test-sha512 \
+		   test-tiger
+
 LDADD = libfcrypt.a
 
-noinst_PROGRAMS = test-arc4 test-md4 test-md5 test-sha1 test-sha256 \
-		  test-sha512 test-tiger
+# ./configure --build-tests
+if BUILD_TESTS
+
+noinst_PROGRAMS = $(test_executables)
 
 test_arc4_SOURCES = test-arc4.c
+test_blowfish_SOURCES = test-blowfish.c
 test_md4_SOURCES = test-md4.c
 test_md5_SOURCES = test-md5.c
 test_sha1_SOURCES = test-sha1.c

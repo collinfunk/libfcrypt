@@ -1,6 +1,6 @@
 
 AC_INIT([libfcrypt],[0.0],[github.com/collinfunk/libfcrypt])
-AC_PREREQ([2.71])
+AC_PREREQ([2.69])
 
 
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
