@@ -13,7 +13,6 @@ tags
 *.tar.zst
 *.zip
 
-
 # C objects and libraries
 *.o
 *.a
@@ -33,12 +32,15 @@ tags
 autom4te.cache
 aclocal.m4
 /compile
+config.h.in
+config.h
 /config.log
 /config.status
 /configure
 /depcomp
 /install-sh
 /missing
+stamp-*
 
 # Automake
 Makefile.in

@@ -24,6 +24,10 @@ AC_ARG_ENABLE([build-tests],
 				esac], [build_tests=false])
 AM_CONDITIONAL([BUILD_TESTS], [test x$build_tests = xtrue])
 
+# Memory functions that shouldn't be optimized out.
+AC_CHECK_FUNCS([memset_s explicit_bzero memset_explicit explicit_memset])
+
+AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
 
