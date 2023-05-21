@@ -3,6 +3,8 @@ AM_CFLAGS = -I$(top_srcdir)/
 
 noinst_LIBRARIES = libfcrypt.a
 libfcrypt_a_SOURCES = arc4.c \
+		      blake2b.c \
+		      blake2s.c \
 		      blowfish.c \
 		      md4.c \
 		      md5.c \
@@ -12,6 +14,8 @@ libfcrypt_a_SOURCES = arc4.c \
 		      tiger.c
 
 include_HEADERS = arc4.h \
+		  blake2b.h \
+		  blake2s.h \
 		  blowfish.h \
 		  bswap.h \
 		  circularshift.h \
@@ -25,6 +29,8 @@ include_HEADERS = arc4.h \
 dist_doc_DATA = README LICENSE
 
 test_executables = test-arc4 \
+		   test-blake2b \
+		   test-blake2s \
 		   test-blowfish \
 		   test-md4 \
 		   test-md5 \
@@ -41,6 +47,8 @@ if BUILD_TESTS
 noinst_PROGRAMS = $(test_executables)
 
 test_arc4_SOURCES = test-arc4.c
+test_blake2b_SOURCES = test-blake2b.c
+test_blake2s_SOURCES = test-blake2s.c
 test_blowfish_SOURCES = test-blowfish.c
 test_md4_SOURCES = test-md4.c
 test_md5_SOURCES = test-md5.c
