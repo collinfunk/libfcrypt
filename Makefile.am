@@ -6,6 +6,7 @@ libfcrypt_a_SOURCES = arc4.c \
 		      blake2b.c \
 		      blake2s.c \
 		      blowfish.c \
+		      crc32.c \
 		      fcrypt_memzero.c \
 		      md4.c \
 		      md5.c \
@@ -22,10 +23,11 @@ include_HEADERS = arc4.h \
 		  blowfish.h \
 		  bswap.h \
 		  circularshift.h \
+		  crc32.h \
 		  fcrypt_memzero.h \
 		  md4.h \
 		  md5.h \
-		  rmd128.c \
+		  rmd128.h \
 		  rmd160.h \
 		  sha1.h \
 		  sha256.h \
@@ -38,6 +40,7 @@ test_executables = test-arc4 \
 		   test-blake2b \
 		   test-blake2s \
 		   test-blowfish \
+		   test-crc32 \
 		   test-md4 \
 		   test-md5 \
 		   test-rmd128 \
@@ -58,6 +61,7 @@ test_arc4_SOURCES = test-arc4.c
 test_blake2b_SOURCES = test-blake2b.c
 test_blake2s_SOURCES = test-blake2s.c
 test_blowfish_SOURCES = test-blowfish.c
+test_crc32_SOURCES = test-crc32.c
 test_md4_SOURCES = test-md4.c
 test_md5_SOURCES = test-md5.c
 test_rmd128_SOURCES = test-rmd128.c
