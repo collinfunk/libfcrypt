@@ -1,0 +1,28 @@
+Below is a list of algorithms implemented. Be aware that `Hash algorithms`
+includes non-cryptographic hashes (e.g. CRC-32). Many algorithms have also
+been broken. Just because it is listed here doesn't mean you should use it :).
+
+Hash algorithms
+===============
+BLAKE2b
+BLAKE2s
+CRC-32
+MD4
+MD5
+RIPEMD-128
+RIPEMD-160
+SHA-1
+SHA-256
+SHA-512
+SipHash
+Tiger
+Tiger2
+
+Symmetric-key block ciphers
+===========================
+Blowfish (ECB mode)
+
+Symmetric-key stream ciphers
+============================
+ARC4/RC4
+

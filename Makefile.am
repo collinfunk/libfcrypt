@@ -15,6 +15,7 @@ libfcrypt_a_SOURCES = arc4.c \
 		      sha1.c \
 		      sha256.c \
 		      sha512.c \
+		      siphash.c \
 		      tiger.c
 
 include_HEADERS = arc4.h \
@@ -32,6 +33,7 @@ include_HEADERS = arc4.h \
 		  sha1.h \
 		  sha256.h \
 		  sha512.h \
+		  siphash.h \
 		  tiger.h
 
 dist_doc_DATA = README LICENSE
@@ -48,6 +50,7 @@ test_executables = test-arc4 \
 		   test-sha1 \
 		   test-sha256 \
 		   test-sha512 \
+		   test-siphash \
 		   test-tiger
 
 LDADD = libfcrypt.a
@@ -69,6 +72,7 @@ test_rmd160_SOURCES = test-rmd160.c
 test_sha1_SOURCES = test-sha1.c
 test_sha256_SOURCES = test-sha256.c
 test_sha512_SOURCES = test-sha512.c
+test_siphash_SOURCES = test-siphash.c
 test_tiger_SOURCES = test-tiger.c
 
 endif
