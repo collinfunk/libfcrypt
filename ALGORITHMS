@@ -25,4 +25,5 @@ Blowfish (ECB mode)
 Symmetric-key stream ciphers
 ============================
 ARC4/RC4
+ChaCha
 

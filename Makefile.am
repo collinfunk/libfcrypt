@@ -6,6 +6,7 @@ libfcrypt_a_SOURCES = arc4.c \
 		      blake2b.c \
 		      blake2s.c \
 		      blowfish.c \
+		      chacha.c \
 		      crc32.c \
 		      fcrypt_memzero.c \
 		      md4.c \
@@ -23,6 +24,7 @@ include_HEADERS = arc4.h \
 		  blake2s.h \
 		  blowfish.h \
 		  bswap.h \
+		  chacha.h \
 		  circularshift.h \
 		  crc32.h \
 		  fcrypt_memzero.h \
@@ -36,12 +38,13 @@ include_HEADERS = arc4.h \
 		  siphash.h \
 		  tiger.h
 
-dist_doc_DATA = README LICENSE
+dist_doc_DATA = README LICENSE ALGORITHMS
 
 test_executables = test-arc4 \
 		   test-blake2b \
 		   test-blake2s \
 		   test-blowfish \
+		   test-chacha \
 		   test-crc32 \
 		   test-md4 \
 		   test-md5 \
@@ -64,6 +67,7 @@ test_arc4_SOURCES = test-arc4.c
 test_blake2b_SOURCES = test-blake2b.c
 test_blake2s_SOURCES = test-blake2s.c
 test_blowfish_SOURCES = test-blowfish.c
+test_chacha_SOURCES = test-chacha.c
 test_crc32_SOURCES = test-crc32.c
 test_md4_SOURCES = test-md4.c
 test_md5_SOURCES = test-md5.c
