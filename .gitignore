@@ -55,3 +55,8 @@ Makefile
 test-*
 !test-*.c
 
+# Cmake
+build/
+_build/
+cmake-build-*/
+
