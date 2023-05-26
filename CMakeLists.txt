@@ -24,6 +24,7 @@ add_library(fcrypt STATIC
 	chacha.c
 	crc32.c
 	fcrypt_memzero.c
+	md2.c
 	md4.c
 	md5.c
 	rmd128.c
@@ -47,6 +48,7 @@ if (FCRYPT_BUILD_TESTS)
 	add_executable(test-blowfish test-blowfish.c)
 	add_executable(test-chacha test-chacha.c)
 	add_executable(test-crc32 test-crc32.c)
+	add_executable(test-md2 test-md2.c)
 	add_executable(test-md4 test-md4.c)
 	add_executable(test-md5 test-md5.c)
 	add_executable(test-rmd128 test-rmd128.c)
@@ -63,6 +65,7 @@ if (FCRYPT_BUILD_TESTS)
 	target_link_libraries(test-blowfish PRIVATE fcrypt)
 	target_link_libraries(test-chacha PRIVATE fcrypt)
 	target_link_libraries(test-crc32 PRIVATE fcrypt)
+	target_link_libraries(test-md2 PRIVATE fcrypt)
 	target_link_libraries(test-md4 PRIVATE fcrypt)
 	target_link_libraries(test-md5 PRIVATE fcrypt)
 	target_link_libraries(test-rmd128 PRIVATE fcrypt)
