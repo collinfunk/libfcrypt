@@ -21,6 +21,7 @@ add_library(fcrypt STATIC
 	blake2b.c
 	blake2s.c
 	blowfish.c
+	camellia.c
 	chacha.c
 	crc32.c
 	fcrypt_memzero.c
