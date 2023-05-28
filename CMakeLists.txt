@@ -17,11 +17,11 @@ configure_file(config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 option(FCRYPT_BUILD_TESTS OFF "Build test executables")
 
 add_library(fcrypt STATIC
+	aes.c
 	arc4.c
 	blake2b.c
 	blake2s.c
 	blowfish.c
-	camellia.c
 	chacha.c
 	crc32.c
 	fcrypt_memzero.c
@@ -43,6 +43,7 @@ target_include_directories(fcrypt PUBLIC
 )
 
 if (FCRYPT_BUILD_TESTS)
+	add_executable(test-aes test-aes.c)
 	add_executable(test-arc4 test-arc4.c)
 	add_executable(test-blake2b test-blake2b.c)
 	add_executable(test-blake2s test-blake2s.c)
@@ -60,6 +61,7 @@ if (FCRYPT_BUILD_TESTS)
 	add_executable(test-siphash test-siphash.c)
 	add_executable(test-tiger test-tiger.c)
 
+	target_link_libraries(test-aes PRIVATE fcrypt)
 	target_link_libraries(test-arc4 PRIVATE fcrypt)
 	target_link_libraries(test-blake2b PRIVATE fcrypt)
 	target_link_libraries(test-blake2s PRIVATE fcrypt)

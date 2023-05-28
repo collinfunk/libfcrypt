@@ -21,6 +21,7 @@ Tiger2
 
 Symmetric-key block ciphers
 ===========================
+AES
 Blowfish (ECB mode)
 
 Symmetric-key stream ciphers
