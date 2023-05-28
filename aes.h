@@ -42,11 +42,13 @@
 #define AES256_ROUNDS 14
 
 struct aes_ctx {
-	uint32_t ek[60]; /* 4 * (Nr + 1) */
+	uint32_t ek[60]; /* 4 * (MAX(Nr) + 1) */
+	uint32_t dk[60]; /* 4 * (MAX(Nr) + 1) */
 	size_t rounds;   /* Rounds for key size. */
 };
 
-void aes_set_key(struct aes_ctx *, const uint8_t *, size_t);
+void aes_set_encrypt_key(struct aes_ctx *, const uint8_t *, size_t);
+void aes_set_decrypt_key(struct aes_ctx *, const uint8_t *, size_t);
 
 #endif /* AES_H */
 

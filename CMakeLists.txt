@@ -17,7 +17,6 @@ configure_file(config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 option(FCRYPT_BUILD_TESTS OFF "Build test executables")
 
 add_library(fcrypt STATIC
-	aes.c
 	arc4.c
 	blake2b.c
 	blake2s.c

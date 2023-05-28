@@ -25,11 +25,16 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 
 #include "aes.h"
 #include "bswap.h"
 #include "circularshift.h"
 
+/*
+ * rcon[i] is given by [x^(i - 1), {00}, {00}, {00}] in the field GF(2^8).
+ * See FIPS 197 5.2 Key Expansion.
+ */
 #define RCON0 0x01000000
 #define RCON1 0x02000000
 #define RCON2 0x04000000
@@ -41,6 +46,21 @@
 #define RCON8 0x1b000000
 #define RCON9 0x36000000
 
+/*
+ * These tables are based on section 5.2 of the AES proposal for Rijndael.
+ * Code for generating the S-box, inverse S-box, and these tables is in
+ * "make-aes-sboxes.c".
+ *
+ * te0[a] =  s[a] * [02, 01, 01, 03]
+ * te0[a] =  s[a] * [03, 02, 01, 01]
+ * te0[a] =  s[a] * [01, 03, 02, 01]
+ * te0[a] =  s[a] * [01, 01, 03, 02]
+ *
+ * td0[a] = si[a] * [0e, 09, 0d, 0b]
+ * td1[a] = si[a] * [0b, 0e, 09, 0d]
+ * td2[a] = si[a] * [0d, 0b, 0e, 09]
+ * td3[a] = si[a] * [09, 0d, 0b, 0e]
+ */
 static const uint32_t te0[256] = {
 	0xc66363a5, 0xf87c7c84, 0xee777799, 0xf67b7b8d,
 	0xfff2f20d, 0xd66b6bbd, 0xde6f6fb1, 0x91c5c554,
@@ -578,10 +598,11 @@ static const uint32_t td3[256] = {
 };
 
 static void
-aes_set_key128(uint32_t *rk, const uint8_t *key)
+aes_set_encrypt_key128(uint32_t *rk, const uint8_t *key)
 {
 	uint32_t t;
 
+	/* Nk == 4, 11 round keys */
 	rk[0] = buff_get_be32(key);
 	rk[1] = buff_get_be32(key + 4);
 	rk[2] = buff_get_be32(key + 8);
@@ -700,10 +721,11 @@ aes_set_key128(uint32_t *rk, const uint8_t *key)
 }
 
 static void
-aes_set_key192(uint32_t *rk, const uint8_t *key)
+aes_set_encrypt_key192(uint32_t *rk, const uint8_t *key)
 {
 	uint32_t t;
 
+	/* Nk == 6, 13 round keys */
 	rk[0] = buff_get_be32(key);
 	rk[1] = buff_get_be32(key + 4);
 	rk[2] = buff_get_be32(key + 8);
@@ -816,10 +838,11 @@ aes_set_key192(uint32_t *rk, const uint8_t *key)
 }
 
 static void
-aes_set_key256(uint32_t *rk, const uint8_t  *key)
+aes_set_encrypt_key256(uint32_t *rk, const uint8_t  *key)
 {
 	uint32_t t;
 
+	/* Nk == 8, 15 round keys */
 	rk[0] = buff_get_be32(key);
 	rk[1] = buff_get_be32(key + 4);
 	rk[2] = buff_get_be32(key + 8);
@@ -962,21 +985,817 @@ aes_set_key256(uint32_t *rk, const uint8_t  *key)
 	rk[59] ^= rk[51] ^ rk[58];
 }
 
+static void
+aes_set_decrypt_key128(uint32_t *rk, const uint8_t  *key)
+{
+	uint32_t t;
+
+	/* Invert the round keys (11) */
+	t = rk[0];
+	rk[0] = rk[40];
+	rk[40] = t;
+	t = rk[1];
+	rk[1] = rk[41];
+	rk[41] = t;
+	t = rk[2];
+	rk[2] = rk[42];
+	rk[42] = t;
+	t = rk[3];
+	rk[3] = rk[43];
+	rk[43] = t;
+	t = rk[4];
+	rk[4] = rk[36];
+	rk[36] = t;
+	t = rk[5];
+	rk[5] = rk[37];
+	rk[37] = t;
+	t = rk[6];
+	rk[6] = rk[38];
+	rk[38] = t;
+	t = rk[7];
+	rk[7] = rk[39];
+	rk[39] = t;
+	t = rk[8];
+	rk[8] = rk[32];
+	rk[32] = t;
+	t = rk[9];
+	rk[9] = rk[33];
+	rk[33] = t;
+	t = rk[10];
+	rk[10] = rk[34];
+	rk[34] = t;
+	t = rk[11];
+	rk[11] = rk[35];
+	rk[35] = t;
+	t = rk[12];
+	rk[12] = rk[28];
+	rk[28] = t;
+	t = rk[13];
+	rk[13] = rk[29];
+	rk[29] = t;
+	t = rk[14];
+	rk[14] = rk[30];
+	rk[30] = t;
+	t = rk[15];
+	rk[15] = rk[31];
+	rk[31] = t;
+	t = rk[16];
+	rk[16] = rk[24];
+	rk[24] = t;
+	t = rk[17];
+	rk[17] = rk[25];
+	rk[25] = t;
+	t = rk[18];
+	rk[18] = rk[26];
+	rk[26] = t;
+	t = rk[19];
+	rk[19] = rk[27];
+	rk[27] = t;
+
+	/* Inverse MixColums on all round keys except the first and last */
+	rk[4] = td0[te1[(rk[4] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[4] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[4] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[4]) & 0xff] & 0xff];
+	rk[5] = td0[te1[(rk[5] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[5] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[5] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[5]) & 0xff] & 0xff];
+	rk[6] = td0[te1[(rk[6] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[6] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[6] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[6]) & 0xff] & 0xff];
+	rk[7] = td0[te1[(rk[7] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[7] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[7] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[7]) & 0xff] & 0xff];
+	rk[8] = td0[te1[(rk[8] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[8] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[8] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[8]) & 0xff] & 0xff];
+	rk[9] = td0[te1[(rk[9] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[9] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[9] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[9]) & 0xff] & 0xff];
+	rk[10] = td0[te1[(rk[10] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[10] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[10] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[10]) & 0xff] & 0xff];
+	rk[11] = td0[te1[(rk[11] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[11] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[11] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[11]) & 0xff] & 0xff];
+	rk[12] = td0[te1[(rk[12] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[12] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[12] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[12]) & 0xff] & 0xff];
+	rk[13] = td0[te1[(rk[13] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[13] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[13] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[13]) & 0xff] & 0xff];
+	rk[14] = td0[te1[(rk[14] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[14] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[14] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[14]) & 0xff] & 0xff];
+	rk[15] = td0[te1[(rk[15] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[15] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[15] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[15]) & 0xff] & 0xff];
+	rk[16] = td0[te1[(rk[16] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[16] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[16] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[16]) & 0xff] & 0xff];
+	rk[17] = td0[te1[(rk[17] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[17] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[17] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[17]) & 0xff] & 0xff];
+	rk[18] = td0[te1[(rk[18] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[18] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[18] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[18]) & 0xff] & 0xff];
+	rk[19] = td0[te1[(rk[19] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[19] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[19] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[19]) & 0xff] & 0xff];
+	rk[20] = td0[te1[(rk[20] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[20] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[20] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[20]) & 0xff] & 0xff];
+	rk[21] = td0[te1[(rk[21] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[21] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[21] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[21]) & 0xff] & 0xff];
+	rk[22] = td0[te1[(rk[22] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[22] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[22] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[22]) & 0xff] & 0xff];
+	rk[23] = td0[te1[(rk[23] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[23] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[23] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[23]) & 0xff] & 0xff];
+	rk[24] = td0[te1[(rk[24] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[24] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[24] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[24]) & 0xff] & 0xff];
+	rk[25] = td0[te1[(rk[25] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[25] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[25] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[25]) & 0xff] & 0xff];
+	rk[26] = td0[te1[(rk[26] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[26] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[26] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[26]) & 0xff] & 0xff];
+	rk[27] = td0[te1[(rk[27] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[27] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[27] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[27]) & 0xff] & 0xff];
+	rk[28] = td0[te1[(rk[28] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[28] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[28] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[28]) & 0xff] & 0xff];
+	rk[29] = td0[te1[(rk[29] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[29] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[29] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[29]) & 0xff] & 0xff];
+	rk[30] = td0[te1[(rk[30] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[30] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[30] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[30]) & 0xff] & 0xff];
+	rk[31] = td0[te1[(rk[31] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[31] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[31] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[31]) & 0xff] & 0xff];
+	rk[32] = td0[te1[(rk[32] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[32] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[32] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[32]) & 0xff] & 0xff];
+	rk[33] = td0[te1[(rk[33] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[33] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[33] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[33]) & 0xff] & 0xff];
+	rk[34] = td0[te1[(rk[34] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[34] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[34] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[34]) & 0xff] & 0xff];
+	rk[35] = td0[te1[(rk[35] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[35] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[35] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[35]) & 0xff] & 0xff];
+	rk[36] = td0[te1[(rk[36] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[36] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[36] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[36]) & 0xff] & 0xff];
+	rk[37] = td0[te1[(rk[37] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[37] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[37] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[37]) & 0xff] & 0xff];
+	rk[38] = td0[te1[(rk[38] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[38] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[38] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[38]) & 0xff] & 0xff];
+	rk[39] = td0[te1[(rk[39] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[39] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[39] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[39]) & 0xff] & 0xff];
+}
+
+static void
+aes_set_decrypt_key192(uint32_t *rk, const uint8_t  *key)
+{
+	uint32_t t;
+
+	/* Invert the round keys (13) */
+	t = rk[0];
+	rk[0] = rk[48];
+	rk[48] = t;
+	t = rk[1];
+	rk[1] = rk[49];
+	rk[49] = t;
+	t = rk[2];
+	rk[2] = rk[50];
+	rk[50] = t;
+	t = rk[3];
+	rk[3] = rk[51];
+	rk[51] = t;
+	t = rk[4];
+	rk[4] = rk[44];
+	rk[44] = t;
+	t = rk[5];
+	rk[5] = rk[45];
+	rk[45] = t;
+	t = rk[6];
+	rk[6] = rk[46];
+	rk[46] = t;
+	t = rk[7];
+	rk[7] = rk[47];
+	rk[47] = t;
+	t = rk[8];
+	rk[8] = rk[40];
+	rk[40] = t;
+	t = rk[9];
+	rk[9] = rk[41];
+	rk[41] = t;
+	t = rk[10];
+	rk[10] = rk[42];
+	rk[42] = t;
+	t = rk[11];
+	rk[11] = rk[43];
+	rk[43] = t;
+	t = rk[12];
+	rk[12] = rk[36];
+	rk[36] = t;
+	t = rk[13];
+	rk[13] = rk[37];
+	rk[37] = t;
+	t = rk[14];
+	rk[14] = rk[38];
+	rk[38] = t;
+	t = rk[15];
+	rk[15] = rk[39];
+	rk[39] = t;
+	t = rk[16];
+	rk[16] = rk[32];
+	rk[32] = t;
+	t = rk[17];
+	rk[17] = rk[33];
+	rk[33] = t;
+	t = rk[18];
+	rk[18] = rk[34];
+	rk[34] = t;
+	t = rk[19];
+	rk[19] = rk[35];
+	rk[35] = t;
+	t = rk[20];
+	rk[20] = rk[28];
+	rk[28] = t;
+	t = rk[21];
+	rk[21] = rk[29];
+	rk[29] = t;
+	t = rk[22];
+	rk[22] = rk[30];
+	rk[30] = t;
+	t = rk[23];
+	rk[23] = rk[31];
+	rk[31] = t;
+
+	/* Inverse MixColums on all round keys except the first and last */
+	rk[4] = td0[te1[(rk[4] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[4] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[4] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[4]) & 0xff] & 0xff];
+	rk[5] = td0[te1[(rk[5] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[5] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[5] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[5]) & 0xff] & 0xff];
+	rk[6] = td0[te1[(rk[6] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[6] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[6] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[6]) & 0xff] & 0xff];
+	rk[7] = td0[te1[(rk[7] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[7] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[7] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[7]) & 0xff] & 0xff];
+	rk[8] = td0[te1[(rk[8] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[8] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[8] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[8]) & 0xff] & 0xff];
+	rk[9] = td0[te1[(rk[9] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[9] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[9] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[9]) & 0xff] & 0xff];
+	rk[10] = td0[te1[(rk[10] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[10] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[10] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[10]) & 0xff] & 0xff];
+	rk[11] = td0[te1[(rk[11] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[11] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[11] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[11]) & 0xff] & 0xff];
+	rk[12] = td0[te1[(rk[12] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[12] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[12] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[12]) & 0xff] & 0xff];
+	rk[13] = td0[te1[(rk[13] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[13] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[13] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[13]) & 0xff] & 0xff];
+	rk[14] = td0[te1[(rk[14] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[14] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[14] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[14]) & 0xff] & 0xff];
+	rk[15] = td0[te1[(rk[15] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[15] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[15] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[15]) & 0xff] & 0xff];
+	rk[16] = td0[te1[(rk[16] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[16] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[16] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[16]) & 0xff] & 0xff];
+	rk[17] = td0[te1[(rk[17] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[17] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[17] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[17]) & 0xff] & 0xff];
+	rk[18] = td0[te1[(rk[18] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[18] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[18] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[18]) & 0xff] & 0xff];
+	rk[19] = td0[te1[(rk[19] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[19] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[19] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[19]) & 0xff] & 0xff];
+	rk[20] = td0[te1[(rk[20] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[20] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[20] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[20]) & 0xff] & 0xff];
+	rk[21] = td0[te1[(rk[21] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[21] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[21] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[21]) & 0xff] & 0xff];
+	rk[22] = td0[te1[(rk[22] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[22] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[22] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[22]) & 0xff] & 0xff];
+	rk[23] = td0[te1[(rk[23] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[23] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[23] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[23]) & 0xff] & 0xff];
+	rk[24] = td0[te1[(rk[24] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[24] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[24] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[24]) & 0xff] & 0xff];
+	rk[25] = td0[te1[(rk[25] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[25] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[25] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[25]) & 0xff] & 0xff];
+	rk[26] = td0[te1[(rk[26] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[26] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[26] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[26]) & 0xff] & 0xff];
+	rk[27] = td0[te1[(rk[27] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[27] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[27] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[27]) & 0xff] & 0xff];
+	rk[28] = td0[te1[(rk[28] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[28] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[28] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[28]) & 0xff] & 0xff];
+	rk[29] = td0[te1[(rk[29] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[29] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[29] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[29]) & 0xff] & 0xff];
+	rk[30] = td0[te1[(rk[30] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[30] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[30] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[30]) & 0xff] & 0xff];
+	rk[31] = td0[te1[(rk[31] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[31] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[31] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[31]) & 0xff] & 0xff];
+	rk[32] = td0[te1[(rk[32] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[32] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[32] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[32]) & 0xff] & 0xff];
+	rk[33] = td0[te1[(rk[33] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[33] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[33] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[33]) & 0xff] & 0xff];
+	rk[34] = td0[te1[(rk[34] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[34] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[34] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[34]) & 0xff] & 0xff];
+	rk[35] = td0[te1[(rk[35] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[35] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[35] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[35]) & 0xff] & 0xff];
+	rk[36] = td0[te1[(rk[36] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[36] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[36] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[36]) & 0xff] & 0xff];
+	rk[37] = td0[te1[(rk[37] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[37] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[37] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[37]) & 0xff] & 0xff];
+	rk[38] = td0[te1[(rk[38] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[38] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[38] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[38]) & 0xff] & 0xff];
+	rk[39] = td0[te1[(rk[39] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[39] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[39] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[39]) & 0xff] & 0xff];
+	rk[40] = td0[te1[(rk[40] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[40] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[40] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[40]) & 0xff] & 0xff];
+	rk[41] = td0[te1[(rk[41] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[41] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[41] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[41]) & 0xff] & 0xff];
+	rk[42] = td0[te1[(rk[42] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[42] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[42] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[42]) & 0xff] & 0xff];
+	rk[43] = td0[te1[(rk[43] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[43] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[43] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[43]) & 0xff] & 0xff];
+	rk[44] = td0[te1[(rk[44] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[44] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[44] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[44]) & 0xff] & 0xff];
+	rk[45] = td0[te1[(rk[45] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[45] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[45] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[45]) & 0xff] & 0xff];
+	rk[46] = td0[te1[(rk[46] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[46] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[46] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[46]) & 0xff] & 0xff];
+	rk[47] = td0[te1[(rk[47] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[47] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[47] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[47]) & 0xff] & 0xff];
+}
+
+static void
+aes_set_decrypt_key256(uint32_t *rk, const uint8_t  *key)
+{
+	uint32_t t;
+
+	/* Invert the round keys (15) */
+	t = rk[0];
+	rk[0] = rk[56];
+	rk[56] = t;
+	t = rk[1];
+	rk[1] = rk[57];
+	rk[57] = t;
+	t = rk[2];
+	rk[2] = rk[58];
+	rk[58] = t;
+	t = rk[3];
+	rk[3] = rk[59];
+	rk[59] = t;
+	t = rk[4];
+	rk[4] = rk[52];
+	rk[52] = t;
+	t = rk[5];
+	rk[5] = rk[53];
+	rk[53] = t;
+	t = rk[6];
+	rk[6] = rk[54];
+	rk[54] = t;
+	t = rk[7];
+	rk[7] = rk[55];
+	rk[55] = t;
+	t = rk[8];
+	rk[8] = rk[48];
+	rk[48] = t;
+	t = rk[9];
+	rk[9] = rk[49];
+	rk[49] = t;
+	t = rk[10];
+	rk[10] = rk[50];
+	rk[50] = t;
+	t = rk[11];
+	rk[11] = rk[51];
+	rk[51] = t;
+	t = rk[12];
+	rk[12] = rk[44];
+	rk[44] = t;
+	t = rk[13];
+	rk[13] = rk[45];
+	rk[45] = t;
+	t = rk[14];
+	rk[14] = rk[46];
+	rk[46] = t;
+	t = rk[15];
+	rk[15] = rk[47];
+	rk[47] = t;
+	t = rk[16];
+	rk[16] = rk[40];
+	rk[40] = t;
+	t = rk[17];
+	rk[17] = rk[41];
+	rk[41] = t;
+	t = rk[18];
+	rk[18] = rk[42];
+	rk[42] = t;
+	t = rk[19];
+	rk[19] = rk[43];
+	rk[43] = t;
+	t = rk[20];
+	rk[20] = rk[36];
+	rk[36] = t;
+	t = rk[21];
+	rk[21] = rk[37];
+	rk[37] = t;
+	t = rk[22];
+	rk[22] = rk[38];
+	rk[38] = t;
+	t = rk[23];
+	rk[23] = rk[39];
+	rk[39] = t;
+	t = rk[24];
+	rk[24] = rk[32];
+	rk[32] = t;
+	t = rk[25];
+	rk[25] = rk[33];
+	rk[33] = t;
+	t = rk[26];
+	rk[26] = rk[34];
+	rk[34] = t;
+	t = rk[27];
+	rk[27] = rk[35];
+	rk[35] = t;
+
+	/* Inverse MixColums on all round keys except the first and last */
+	rk[4] = td0[te1[(rk[4] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[4] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[4] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[4]) & 0xff] & 0xff];
+	rk[5] = td0[te1[(rk[5] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[5] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[5] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[5]) & 0xff] & 0xff];
+	rk[6] = td0[te1[(rk[6] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[6] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[6] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[6]) & 0xff] & 0xff];
+	rk[7] = td0[te1[(rk[7] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[7] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[7] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[7]) & 0xff] & 0xff];
+	rk[8] = td0[te1[(rk[8] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[8] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[8] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[8]) & 0xff] & 0xff];
+	rk[9] = td0[te1[(rk[9] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[9] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[9] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[9]) & 0xff] & 0xff];
+	rk[10] = td0[te1[(rk[10] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[10] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[10] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[10]) & 0xff] & 0xff];
+	rk[11] = td0[te1[(rk[11] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[11] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[11] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[11]) & 0xff] & 0xff];
+	rk[12] = td0[te1[(rk[12] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[12] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[12] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[12]) & 0xff] & 0xff];
+	rk[13] = td0[te1[(rk[13] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[13] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[13] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[13]) & 0xff] & 0xff];
+	rk[14] = td0[te1[(rk[14] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[14] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[14] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[14]) & 0xff] & 0xff];
+	rk[15] = td0[te1[(rk[15] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[15] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[15] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[15]) & 0xff] & 0xff];
+	rk[16] = td0[te1[(rk[16] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[16] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[16] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[16]) & 0xff] & 0xff];
+	rk[17] = td0[te1[(rk[17] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[17] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[17] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[17]) & 0xff] & 0xff];
+	rk[18] = td0[te1[(rk[18] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[18] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[18] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[18]) & 0xff] & 0xff];
+	rk[19] = td0[te1[(rk[19] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[19] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[19] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[19]) & 0xff] & 0xff];
+	rk[20] = td0[te1[(rk[20] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[20] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[20] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[20]) & 0xff] & 0xff];
+	rk[21] = td0[te1[(rk[21] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[21] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[21] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[21]) & 0xff] & 0xff];
+	rk[22] = td0[te1[(rk[22] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[22] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[22] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[22]) & 0xff] & 0xff];
+	rk[23] = td0[te1[(rk[23] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[23] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[23] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[23]) & 0xff] & 0xff];
+	rk[24] = td0[te1[(rk[24] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[24] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[24] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[24]) & 0xff] & 0xff];
+	rk[25] = td0[te1[(rk[25] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[25] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[25] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[25]) & 0xff] & 0xff];
+	rk[26] = td0[te1[(rk[26] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[26] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[26] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[26]) & 0xff] & 0xff];
+	rk[27] = td0[te1[(rk[27] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[27] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[27] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[27]) & 0xff] & 0xff];
+	rk[28] = td0[te1[(rk[28] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[28] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[28] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[28]) & 0xff] & 0xff];
+	rk[29] = td0[te1[(rk[29] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[29] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[29] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[29]) & 0xff] & 0xff];
+	rk[30] = td0[te1[(rk[30] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[30] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[30] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[30]) & 0xff] & 0xff];
+	rk[31] = td0[te1[(rk[31] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[31] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[31] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[31]) & 0xff] & 0xff];
+	rk[32] = td0[te1[(rk[32] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[32] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[32] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[32]) & 0xff] & 0xff];
+	rk[33] = td0[te1[(rk[33] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[33] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[33] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[33]) & 0xff] & 0xff];
+	rk[34] = td0[te1[(rk[34] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[34] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[34] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[34]) & 0xff] & 0xff];
+	rk[35] = td0[te1[(rk[35] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[35] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[35] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[35]) & 0xff] & 0xff];
+	rk[36] = td0[te1[(rk[36] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[36] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[36] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[36]) & 0xff] & 0xff];
+	rk[37] = td0[te1[(rk[37] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[37] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[37] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[37]) & 0xff] & 0xff];
+	rk[38] = td0[te1[(rk[38] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[38] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[38] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[38]) & 0xff] & 0xff];
+	rk[39] = td0[te1[(rk[39] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[39] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[39] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[39]) & 0xff] & 0xff];
+	rk[40] = td0[te1[(rk[40] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[40] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[40] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[40]) & 0xff] & 0xff];
+	rk[41] = td0[te1[(rk[41] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[41] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[41] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[41]) & 0xff] & 0xff];
+	rk[42] = td0[te1[(rk[42] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[42] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[42] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[42]) & 0xff] & 0xff];
+	rk[43] = td0[te1[(rk[43] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[43] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[43] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[43]) & 0xff] & 0xff];
+	rk[44] = td0[te1[(rk[44] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[44] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[44] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[44]) & 0xff] & 0xff];
+	rk[45] = td0[te1[(rk[45] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[45] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[45] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[45]) & 0xff] & 0xff];
+	rk[46] = td0[te1[(rk[46] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[46] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[46] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[46]) & 0xff] & 0xff];
+	rk[47] = td0[te1[(rk[47] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[47] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[47] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[47]) & 0xff] & 0xff];
+	rk[48] = td0[te1[(rk[48] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[48] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[48] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[48]) & 0xff] & 0xff];
+	rk[49] = td0[te1[(rk[49] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[49] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[49] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[49]) & 0xff] & 0xff];
+	rk[50] = td0[te1[(rk[50] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[50] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[50] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[50]) & 0xff] & 0xff];
+	rk[51] = td0[te1[(rk[51] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[51] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[51] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[51]) & 0xff] & 0xff];
+	rk[52] = td0[te1[(rk[52] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[52] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[52] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[52]) & 0xff] & 0xff];
+	rk[53] = td0[te1[(rk[53] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[53] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[53] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[53]) & 0xff] & 0xff];
+	rk[54] = td0[te1[(rk[54] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[54] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[54] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[54]) & 0xff] & 0xff];
+	rk[55] = td0[te1[(rk[55] >> 24) & 0xff] & 0xff] ^
+		td1[te1[(rk[55] >> 16) & 0xff] & 0xff] ^
+		td2[te1[(rk[55] >> 8) & 0xff] & 0xff] ^
+		td3[te1[(rk[55]) & 0xff] & 0xff];
+}
+
 void
-aes_set_key(struct aes_ctx *ctx, const uint8_t *key, size_t keylen)
+aes_set_encrypt_key(struct aes_ctx *ctx, const uint8_t *key, size_t keylen)
 {
 	switch (keylen) {
 		case AES128_KEY_SIZE:
 			ctx->rounds = AES128_ROUNDS;
-			aes_set_key128(ctx->ek, key);
+			aes_set_encrypt_key128(ctx->ek, key);
 			break;
 		case AES192_KEY_SIZE:
 			ctx->rounds = AES192_ROUNDS;
-			aes_set_key192(ctx->ek, key);
+			aes_set_encrypt_key192(ctx->ek, key);
 			break;
 		case AES256_KEY_SIZE:
 			ctx->rounds = AES256_ROUNDS;
-			aes_set_key256(ctx->ek, key);
+			aes_set_encrypt_key256(ctx->ek, key);
+			break;
+		default:
+			ctx->rounds = 0;
+			break;
+	}
+}
+
+void
+aes_set_decrypt_key(struct aes_ctx *ctx, const uint8_t *key, size_t keylen)
+{
+	if (ctx->rounds == 0)
+		aes_set_encrypt_key(ctx, key, keylen);
+	memcpy(ctx->dk, ctx->ek, sizeof(ctx->ek));
+	switch (ctx->rounds) {
+		case AES128_ROUNDS:
+			aes_set_decrypt_key128(ctx->dk, key);
+			break;
+		case AES192_ROUNDS:
+			aes_set_decrypt_key192(ctx->dk, key);
+			break;
+		case AES256_ROUNDS:
+			aes_set_decrypt_key256(ctx->dk, key);
 			break;
 	}
 }
