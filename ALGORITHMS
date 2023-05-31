@@ -7,6 +7,7 @@ Hash algorithms
 BLAKE2b
 BLAKE2s
 CRC-32
+HAS-160
 MD2
 MD4
 MD5
