@@ -32,16 +32,16 @@
 #define RMD160_DIGEST_SIZE 20
 #define RMD160_BLOCK_SIZE 64
 
-struct rmd160_ctx {
-	uint32_t state[5];                 /* Hash state */
-	uint64_t count;                    /* Number of bits mod 2^64 */
-	uint8_t buffer[RMD160_BLOCK_SIZE]; /* Input buffer */
+struct rmd160_ctx
+{
+  uint32_t state[5];                 /* Hash state */
+  uint64_t count;                    /* Number of bits mod 2^64 */
+  uint8_t buffer[RMD160_BLOCK_SIZE]; /* Input buffer */
 };
 
-void rmd160_init(struct rmd160_ctx *);
-void rmd160_transform(uint32_t *, const uint8_t *);
-void rmd160_update(struct rmd160_ctx *, const void *, size_t);
-void rmd160_final(uint8_t *, struct rmd160_ctx *);
+void rmd160_init (struct rmd160_ctx *);
+void rmd160_transform (uint32_t *, const uint8_t *);
+void rmd160_update (struct rmd160_ctx *, const void *, size_t);
+void rmd160_final (uint8_t *, struct rmd160_ctx *);
 
 #endif /* RMD160_H */
-

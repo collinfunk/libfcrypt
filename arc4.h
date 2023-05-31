@@ -29,14 +29,14 @@
 #include <stddef.h>
 #include <stdint.h>
 
-struct arc4_ctx {
-	uint8_t state[256];
-	uint8_t i;
-	uint8_t j;
+struct arc4_ctx
+{
+  uint8_t state[256];
+  uint8_t i;
+  uint8_t j;
 };
 
-void arc4_set_key(struct arc4_ctx *, const uint8_t *, size_t);
-void arc4_crypt(struct arc4_ctx *, const uint8_t *, uint8_t *, size_t);
+void arc4_set_key (struct arc4_ctx *, const uint8_t *, size_t);
+void arc4_crypt (struct arc4_ctx *, const uint8_t *, uint8_t *, size_t);
 
 #endif /* ARC4_H */
-

@@ -35,20 +35,20 @@
 #define TIGER160_DIGEST_SIZE 20
 #define TIGER128_DIGEST_SIZE 16
 
-struct tiger_ctx {
-	uint64_t state[3];                 /* Hash state */
-	uint64_t count;                    /* Number of bits mod 2^64 */
-	uint8_t buffer[TIGER_BLOCK_SIZE];  /* Input buffer */
-	int version;                       /* Tiger2 if 1, else Tiger1 */
+struct tiger_ctx
+{
+  uint64_t state[3];                /* Hash state */
+  uint64_t count;                   /* Number of bits mod 2^64 */
+  uint8_t buffer[TIGER_BLOCK_SIZE]; /* Input buffer */
+  int version;                      /* Tiger2 if 1, else Tiger1 */
 };
 
-void tiger1_init(struct tiger_ctx *);
-void tiger2_init(struct tiger_ctx *);
-void tiger_transform(uint64_t *, const uint8_t *);
-void tiger_update(struct tiger_ctx *, const void *, size_t);
-void tiger192_final(uint8_t *, struct tiger_ctx *);
-void tiger160_final(uint8_t *, struct tiger_ctx *);
-void tiger128_final(uint8_t *, struct tiger_ctx *);
+void tiger1_init (struct tiger_ctx *);
+void tiger2_init (struct tiger_ctx *);
+void tiger_transform (uint64_t *, const uint8_t *);
+void tiger_update (struct tiger_ctx *, const void *, size_t);
+void tiger192_final (uint8_t *, struct tiger_ctx *);
+void tiger160_final (uint8_t *, struct tiger_ctx *);
+void tiger128_final (uint8_t *, struct tiger_ctx *);
 
 #endif /* TIGER_H */
-

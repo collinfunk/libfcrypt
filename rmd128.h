@@ -32,16 +32,16 @@
 #define RMD128_DIGEST_SIZE 16
 #define RMD128_BLOCK_SIZE 64
 
-struct rmd128_ctx {
-	uint32_t state[4];                 /* Hash state */
-	uint64_t count;                    /* Number of bits mod 2^64 */
-	uint8_t buffer[RMD128_BLOCK_SIZE]; /* Input buffer */
+struct rmd128_ctx
+{
+  uint32_t state[4];                 /* Hash state */
+  uint64_t count;                    /* Number of bits mod 2^64 */
+  uint8_t buffer[RMD128_BLOCK_SIZE]; /* Input buffer */
 };
 
-void rmd128_init(struct rmd128_ctx *);
-void rmd128_transform(uint32_t *, const uint8_t *);
-void rmd128_update(struct rmd128_ctx *, const void *, size_t);
-void rmd128_final(uint8_t *, struct rmd128_ctx *);
+void rmd128_init (struct rmd128_ctx *);
+void rmd128_transform (uint32_t *, const uint8_t *);
+void rmd128_update (struct rmd128_ctx *, const void *, size_t);
+void rmd128_final (uint8_t *, struct rmd128_ctx *);
 
 #endif /* RMD128_H */
-

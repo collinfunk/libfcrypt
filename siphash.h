@@ -39,20 +39,20 @@
 #define SIPHASH_MIN_DIGEST_SIZE 8
 #define SIPHASH_MAX_DIGEST_SIZE 16
 
-struct siphash_ctx {
-	uint64_t state[4];                  /* Hash state. */
-	uint8_t buffer[SIPHASH_BLOCK_SIZE]; /* Input buffer. */
-	uint64_t inputlen;                  /* Total bytes. */
-	uint8_t digestlen;                  /* 8 or 16 bytes. */
-	uint8_t bufferlen;                  /* Used bytes in buffer. */
-	uint8_t crounds;                    /* # of compression rounds. */
-	uint8_t drounds;                    /* # of finalization rounds. */
+struct siphash_ctx
+{
+  uint64_t state[4];                  /* Hash state. */
+  uint8_t buffer[SIPHASH_BLOCK_SIZE]; /* Input buffer. */
+  uint64_t inputlen;                  /* Total bytes. */
+  uint8_t digestlen;                  /* 8 or 16 bytes. */
+  uint8_t bufferlen;                  /* Used bytes in buffer. */
+  uint8_t crounds;                    /* # of compression rounds. */
+  uint8_t drounds;                    /* # of finalization rounds. */
 };
 
-void siphash_init(struct siphash_ctx *, uint8_t, const uint8_t *,
-		uint8_t, uint8_t);
-void siphash_update(struct siphash_ctx *, const void *, size_t);
-void siphash_final(uint8_t *, struct siphash_ctx *);
+void siphash_init (struct siphash_ctx *, uint8_t, const uint8_t *, uint8_t,
+                   uint8_t);
+void siphash_update (struct siphash_ctx *, const void *, size_t);
+void siphash_final (uint8_t *, struct siphash_ctx *);
 
 #endif /* SIPHASH_H */
-

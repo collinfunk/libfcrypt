@@ -37,16 +37,16 @@
 #include <stddef.h>
 #include <stdint.h>
 
-struct chacha_ctx {
-	uint32_t input[16];
+struct chacha_ctx
+{
+  uint32_t input[16];
 };
 
-void chacha128_set_key(struct chacha_ctx *, const uint8_t *);
-void chacha256_set_key(struct chacha_ctx *, const uint8_t *);
-void chacha_set_key(struct chacha_ctx *, const uint8_t *, size_t);
-void chacha_set_iv(struct chacha_ctx *, const uint8_t *, const uint8_t *);
-void chacha_encrypt_bytes(struct chacha_ctx *, const uint8_t *,
-		uint8_t *, size_t);
+void chacha128_set_key (struct chacha_ctx *, const uint8_t *);
+void chacha256_set_key (struct chacha_ctx *, const uint8_t *);
+void chacha_set_key (struct chacha_ctx *, const uint8_t *, size_t);
+void chacha_set_iv (struct chacha_ctx *, const uint8_t *, const uint8_t *);
+void chacha_encrypt_bytes (struct chacha_ctx *, const uint8_t *, uint8_t *,
+                           size_t);
 
 #endif /* CHACHA_H */
-

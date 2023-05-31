@@ -29,23 +29,22 @@
 #include <string.h>
 
 void
-fcrypt_memzero(void *mem, size_t len)
+fcrypt_memzero (void *mem, size_t len)
 {
 #if defined(HAVE_EXPLICIT_BZERO)
-	explicit_bzero(mem, len);
+  explicit_bzero (mem, len);
 #elif defined(HAVE_EXPLICIT_MEMSET)
-	explicit_memset(mem, 0, len);
+  explicit_memset (mem, 0, len);
 #elif defined(HAVE_MEMSET_EXPLICIT)
-	memset_explicit(mem, 0, len);
+  memset_explicit (mem, 0, len);
 #elif defined(__clang__)
-	memset(mem, 0, len);
-	__asm__ __volatile__ ("" : : "g"(mem) : "memory");
+  memset (mem, 0, len);
+  __asm__ __volatile__("" : : "g"(mem) : "memory");
 #elif defined(__GNUC__)
-	memset(mem, 0, len);
-	__asm__ __volatile__ ("" ::: "memory");
+  memset (mem, 0, len);
+  __asm__ __volatile__("" ::: "memory");
 #else
-	void *(*const volatile memset_ptr)(void *, int, size_t) = memset;
-	memset_ptr(mem, 0, len);
+  void *(*const volatile memset_ptr) (void *, int, size_t) = memset;
+  memset_ptr (mem, 0, len);
 #endif
 }
-

@@ -38,52 +38,51 @@
  */
 
 static inline uint8_t
-rotl8(uint8_t val, unsigned int shift)
+rotl8 (uint8_t val, unsigned int shift)
 {
-	return (val << (shift & 7)) | (val >> ((-shift) & 7));
+  return (val << (shift & 7)) | (val >> ((-shift) & 7));
 }
 
 static inline uint16_t
-rotl16(uint16_t val, unsigned int shift)
+rotl16 (uint16_t val, unsigned int shift)
 {
-	return (val << (shift & 15)) | (val >> ((-shift) & 15));
+  return (val << (shift & 15)) | (val >> ((-shift) & 15));
 }
 
 static inline uint32_t
-rotl32(uint32_t val, unsigned int shift)
+rotl32 (uint32_t val, unsigned int shift)
 {
-	return (val << (shift & 31)) | (val >> ((-shift) & 31));
+  return (val << (shift & 31)) | (val >> ((-shift) & 31));
 }
 
 static inline uint64_t
-rotl64(uint64_t val, unsigned int shift)
+rotl64 (uint64_t val, unsigned int shift)
 {
-	return (val << (shift & 63)) | (val >> ((-shift) & 63));
+  return (val << (shift & 63)) | (val >> ((-shift) & 63));
 }
 
 static inline uint8_t
-rotr8(uint8_t val, unsigned int shift)
+rotr8 (uint8_t val, unsigned int shift)
 {
-	return (val >> (shift & 7)) | (val << ((-shift) & 7));
+  return (val >> (shift & 7)) | (val << ((-shift) & 7));
 }
 
 static inline uint16_t
-rotr16(uint16_t val, unsigned int shift)
+rotr16 (uint16_t val, unsigned int shift)
 {
-	return (val >> (shift & 15)) | (val << ((-shift) & 15));
+  return (val >> (shift & 15)) | (val << ((-shift) & 15));
 }
 
 static inline uint32_t
-rotr32(uint32_t val, unsigned int shift)
+rotr32 (uint32_t val, unsigned int shift)
 {
-	return (val >> (shift & 31)) | (val << ((-shift) & 31));
+  return (val >> (shift & 31)) | (val << ((-shift) & 31));
 }
 
 static inline uint64_t
-rotr64(uint64_t val, unsigned int shift)
+rotr64 (uint64_t val, unsigned int shift)
 {
-	return (val >> (shift & 63)) | (val << ((-shift) & 63));
+  return (val >> (shift & 63)) | (val << ((-shift) & 63));
 }
 
 #endif /* CIRCULARSHIFT_H */
-

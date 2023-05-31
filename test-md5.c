@@ -34,88 +34,71 @@
 
 #include "md5.h"
 
-struct md5_testcase {
-	const char *message;
-	const char *digest;
+struct md5_testcase
+{
+  const char *message;
+  const char *digest;
 };
 
-static const struct md5_testcase testcases[] = {
-	{
-		"",
-		"\xd4\x1d\x8c\xd9\x8f\x00\xb2\x04\xe9"
-			"\x80\x09\x98\xec\xf8\x42\x7e"
-	},
-	{
-		"a",
-		"\x0c\xc1\x75\xb9\xc0\xf1\xb6\xa8\x31"
-			"\xc3\x99\xe2\x69\x77\x26\x61"
-	},
-	{
-		"abc",
-		"\x90\x01\x50\x98\x3c\xd2\x4f\xb0\xd6"
-			"\x96\x3f\x7d\x28\xe1\x7f\x72"
-	},
-	{
-		"message digest",
-		"\xf9\x6b\x69\x7d\x7c\xb7\x93\x8d\x52"
-			"\x5a\x2f\x31\xaa\xf1\x61\xd0"
-	},
-	{
-		"abcdefghijklmnopqrstuvwxyz",
-		"\xc3\xfc\xd3\xd7\x61\x92\xe4\x00\x7d"
-			"\xfb\x49\x6c\xca\x67\xe1\x3b"
-	},
-	{
-		"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
-		"\xd1\x74\xab\x98\xd2\x77\xd9\xf5\xa5"
-			"\x61\x1c\x2c\x9f\x41\x9d\x9f"
-	},
-	{
-		"1234567890123456789012345678901234567"
-			"89012345678901234567890123456"
-			"78901234567890",
-		"\x57\xed\xf4\xa2\x2b\xe3\xc9\x55\xac"
-			"\x49\xda\x2e\x21\x07\xb6\x7a"
-	}
+static const struct md5_testcase testcases[]
+    = { { "", "\xd4\x1d\x8c\xd9\x8f\x00\xb2\x04\xe9"
+              "\x80\x09\x98\xec\xf8\x42\x7e" },
+        { "a", "\x0c\xc1\x75\xb9\xc0\xf1\xb6\xa8\x31"
+               "\xc3\x99\xe2\x69\x77\x26\x61" },
+        { "abc", "\x90\x01\x50\x98\x3c\xd2\x4f\xb0\xd6"
+                 "\x96\x3f\x7d\x28\xe1\x7f\x72" },
+        { "message digest", "\xf9\x6b\x69\x7d\x7c\xb7\x93\x8d\x52"
+                            "\x5a\x2f\x31\xaa\xf1\x61\xd0" },
+        { "abcdefghijklmnopqrstuvwxyz", "\xc3\xfc\xd3\xd7\x61\x92\xe4\x00\x7d"
+                                        "\xfb\x49\x6c\xca\x67\xe1\x3b" },
+        { "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
+          "\xd1\x74\xab\x98\xd2\x77\xd9\xf5\xa5"
+          "\x61\x1c\x2c\x9f\x41\x9d\x9f" },
+        { "1234567890123456789012345678901234567"
+          "89012345678901234567890123456"
+          "78901234567890",
+          "\x57\xed\xf4\xa2\x2b\xe3\xc9\x55\xac"
+          "\x49\xda\x2e\x21\x07\xb6\x7a" }
 
-};
+      };
 
-static bool run_md5_testcase(const struct md5_testcase *);
+static bool run_md5_testcase (const struct md5_testcase *);
 
 int
-main(void)
+main (void)
 {
-	uint32_t i;
-	int rv;
-	const struct md5_testcase *curr;
+  uint32_t i;
+  int rv;
+  const struct md5_testcase *curr;
 
-	rv = 0;
-	for (i = 0; i < (sizeof(testcases) / sizeof(testcases[0])); ++i) {
-		curr = &testcases[i];
-		if (!run_md5_testcase(curr)) {
-			fprintf(stderr, "MD5 test %u failed.\n", i);
-			rv = 1;
-		}
-	}
+  rv = 0;
+  for (i = 0; i < (sizeof (testcases) / sizeof (testcases[0])); ++i)
+    {
+      curr = &testcases[i];
+      if (!run_md5_testcase (curr))
+        {
+          fprintf (stderr, "MD5 test %u failed.\n", i);
+          rv = 1;
+        }
+    }
 
-	return rv;
+  return rv;
 }
 
 static bool
-run_md5_testcase(const struct md5_testcase *test)
+run_md5_testcase (const struct md5_testcase *test)
 {
-	struct md5_ctx ctx;
-	uint32_t i;
-	uint8_t digest[MD5_DIGEST_SIZE];
+  struct md5_ctx ctx;
+  uint32_t i;
+  uint8_t digest[MD5_DIGEST_SIZE];
 
-	md5_init(&ctx);
-	md5_update(&ctx, test->message, strlen(test->message));
-	md5_final(digest, &ctx);
+  md5_init (&ctx);
+  md5_update (&ctx, test->message, strlen (test->message));
+  md5_final (digest, &ctx);
 
-	for (i = 0; i < MD5_DIGEST_SIZE; ++i)
-		printf("%02x", digest[i]);
-	printf("\n");
+  for (i = 0; i < MD5_DIGEST_SIZE; ++i)
+    printf ("%02x", digest[i]);
+  printf ("\n");
 
-	return memcmp(digest, test->digest, MD5_DIGEST_SIZE) == 0;
+  return memcmp (digest, test->digest, MD5_DIGEST_SIZE) == 0;
 }
-

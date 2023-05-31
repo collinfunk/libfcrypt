@@ -29,38 +29,40 @@
 #include "arc4.h"
 
 void
-arc4_set_key(struct arc4_ctx *ctx, const uint8_t *key, size_t keylen)
+arc4_set_key (struct arc4_ctx *ctx, const uint8_t *key, size_t keylen)
 {
-	size_t i, j, k;
-	uint8_t t;
+  size_t i, j, k;
+  uint8_t t;
 
-	for (i = 0; i < 256; ++i)
-		ctx->state[i] = i;
-	for (i = j = k = 0; i < 256; ++i) {
-		j = (j + ctx->state[i] + key[k]) & 0xff;
-		t = ctx->state[i];
-		ctx->state[i] = ctx->state[j];
-		ctx->state[j] = t;
-		if (++k >= keylen)
-			k = 0;
-	}
-	ctx->i = ctx->j = 0;
+  for (i = 0; i < 256; ++i)
+    ctx->state[i] = i;
+  for (i = j = k = 0; i < 256; ++i)
+    {
+      j = (j + ctx->state[i] + key[k]) & 0xff;
+      t = ctx->state[i];
+      ctx->state[i] = ctx->state[j];
+      ctx->state[j] = t;
+      if (++k >= keylen)
+        k = 0;
+    }
+  ctx->i = ctx->j = 0;
 }
 
 void
-arc4_crypt(struct arc4_ctx *ctx, const uint8_t *src, uint8_t *dest, size_t len)
+arc4_crypt (struct arc4_ctx *ctx, const uint8_t *src, uint8_t *dest,
+            size_t len)
 {
-	size_t i;
-	uint8_t t;
+  size_t i;
+  uint8_t t;
 
-	for (i = 0; i < len; ++i) {
-		ctx->i = (ctx->i + 1) & 0xff;
-		ctx->j = (ctx->j + ctx->state[ctx->i]) & 0xff;
-		t = ctx->state[ctx->i];
-		ctx->state[ctx->i] = ctx->state[ctx->j];
-		ctx->state[ctx->j] = t;
-		dest[i] = src[i] ^ ctx->state[(ctx->state[ctx->i] +
-				ctx->state[ctx->j]) & 0xff];
-	}
+  for (i = 0; i < len; ++i)
+    {
+      ctx->i = (ctx->i + 1) & 0xff;
+      ctx->j = (ctx->j + ctx->state[ctx->i]) & 0xff;
+      t = ctx->state[ctx->i];
+      ctx->state[ctx->i] = ctx->state[ctx->j];
+      ctx->state[ctx->j] = t;
+      dest[i] = src[i]
+                ^ ctx->state[(ctx->state[ctx->i] + ctx->state[ctx->j]) & 0xff];
+    }
 }
-

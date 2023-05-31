@@ -32,16 +32,16 @@
 #define MD5_DIGEST_SIZE 16
 #define MD5_BLOCK_SIZE 64
 
-struct md5_ctx {
-	uint32_t state[4];                 /* Hash state */
-	uint64_t count;                    /* Number of bits mod 2^64 */
-	uint8_t buffer[MD5_BLOCK_SIZE];   /* Input buffer */
+struct md5_ctx
+{
+  uint32_t state[4];              /* Hash state */
+  uint64_t count;                 /* Number of bits mod 2^64 */
+  uint8_t buffer[MD5_BLOCK_SIZE]; /* Input buffer */
 };
 
-void md5_init(struct md5_ctx *);
-void md5_transform(uint32_t *, const uint8_t *);
-void md5_update(struct md5_ctx *, const void *, size_t);
-void md5_final(uint8_t *, struct md5_ctx *);
+void md5_init (struct md5_ctx *);
+void md5_transform (uint32_t *, const uint8_t *);
+void md5_update (struct md5_ctx *, const void *, size_t);
+void md5_final (uint8_t *, struct md5_ctx *);
 
 #endif /* MD5_H */
-

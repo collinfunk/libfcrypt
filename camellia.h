@@ -35,6 +35,4 @@
 
 #define CAMELLIA_BLOCK_SIZE 16
 
-
 #endif /* CAMELLIA_H */
-

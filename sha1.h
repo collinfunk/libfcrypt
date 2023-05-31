@@ -32,16 +32,16 @@
 #define SHA1_DIGEST_SIZE 20
 #define SHA1_BLOCK_SIZE 64
 
-struct sha1_ctx {
-	uint32_t state[5];                 /* Hash state */
-	uint64_t count;                    /* Number of bits mod 2^64 */
-	uint8_t buffer[SHA1_BLOCK_SIZE];   /* Input buffer */
+struct sha1_ctx
+{
+  uint32_t state[5];               /* Hash state */
+  uint64_t count;                  /* Number of bits mod 2^64 */
+  uint8_t buffer[SHA1_BLOCK_SIZE]; /* Input buffer */
 };
 
-void sha1_init(struct sha1_ctx *);
-void sha1_transform(uint32_t *, const uint8_t *);
-void sha1_update(struct sha1_ctx *, const void *, size_t);
-void sha1_final(uint8_t *, struct sha1_ctx *);
+void sha1_init (struct sha1_ctx *);
+void sha1_transform (uint32_t *, const uint8_t *);
+void sha1_update (struct sha1_ctx *, const void *, size_t);
+void sha1_final (uint8_t *, struct sha1_ctx *);
 
 #endif /* SHA1_H */
-

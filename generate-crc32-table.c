@@ -24,21 +24,21 @@
  */
 
 #include <stddef.h>
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 
 /* Table to compute. */
 static uint32_t crc32_table[256];
 
-static void build_crc32_table(void);
-static void print_cformat_crc32_table(void);
+static void build_crc32_table (void);
+static void print_cformat_crc32_table (void);
 
 int
-main(void)
+main (void)
 {
-	build_crc32_table();
-	print_cformat_crc32_table();
-	return 0;
+  build_crc32_table ();
+  print_cformat_crc32_table ();
+  return 0;
 }
 
 /*
@@ -49,41 +49,44 @@ main(void)
  * Reverse hex representation: 0xedb88320
  */
 static void
-build_crc32_table(void)
+build_crc32_table (void)
 {
-	uint32_t i, j, curr;
+  uint32_t i, j, curr;
 
-	for (i = 0; i < 256; ++i) {
-		curr = i;
-		for (j = 0; j < 8; ++j) {
-			if ((curr & 1) != 0)
-				curr = 0xedb88320 ^ (curr >> 1);
-			else
-				curr = curr >> 1;
-		}
-		crc32_table[i] = curr;
-	}
+  for (i = 0; i < 256; ++i)
+    {
+      curr = i;
+      for (j = 0; j < 8; ++j)
+        {
+          if ((curr & 1) != 0)
+            curr = 0xedb88320 ^ (curr >> 1);
+          else
+            curr = curr >> 1;
+        }
+      crc32_table[i] = curr;
+    }
 }
 
 static void
-print_cformat_crc32_table(void)
+print_cformat_crc32_table (void)
 {
-	uint32_t i, val;
+  uint32_t i, val;
 
-	printf("static const uint32_t crc32_table[256] = {\n");
-	for (i = 1; i <= 256; ++i) {
-		val = crc32_table[i - 1];
-				switch (i & 3) {
-			case 0:
-				printf("0x%08x,\n", val);
-				break;
-			case 1:
-				printf("\t0x%08x, ", val);
-				break;
-			default:
-				printf("0x%08x, ", val);
-		}
-	}
-	printf("};\n");
+  printf ("static const uint32_t crc32_table[256] = {\n");
+  for (i = 1; i <= 256; ++i)
+    {
+      val = crc32_table[i - 1];
+      switch (i & 3)
+        {
+        case 0:
+          printf ("0x%08x,\n", val);
+          break;
+        case 1:
+          printf ("\t0x%08x, ", val);
+          break;
+        default:
+          printf ("0x%08x, ", val);
+        }
+    }
+  printf ("};\n");
 }
-

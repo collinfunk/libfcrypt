@@ -41,33 +41,35 @@
 #define AES256_BLOCK_SIZE 16
 #define AES256_ROUNDS 14
 
-struct aes128_ctx {
-	uint32_t ek[44];
-	uint32_t dk[44];
+struct aes128_ctx
+{
+  uint32_t ek[44];
+  uint32_t dk[44];
 };
 
-struct aes192_ctx {
-	uint32_t ek[52];
-	uint32_t dk[52];
+struct aes192_ctx
+{
+  uint32_t ek[52];
+  uint32_t dk[52];
 };
 
-struct aes256_ctx {
-	uint32_t ek[60];
-	uint32_t dk[60];
+struct aes256_ctx
+{
+  uint32_t ek[60];
+  uint32_t dk[60];
 };
 
-void aes128_set_encrypt_key(struct aes128_ctx *, const uint8_t *);
-void aes192_set_encrypt_key(struct aes192_ctx *, const uint8_t *);
-void aes256_set_encrypt_key(struct aes256_ctx *, const uint8_t *);
-void aes128_set_decrypt_key(struct aes128_ctx *, const uint8_t *);
-void aes192_set_decrypt_key(struct aes192_ctx *, const uint8_t *);
-void aes256_set_decrypt_key(struct aes256_ctx *, const uint8_t *);
-void aes128_encrypt(struct aes128_ctx *, const uint8_t *, uint8_t *);
-void aes192_encrypt(struct aes192_ctx *, const uint8_t *, uint8_t *);
-void aes256_encrypt(struct aes256_ctx *, const uint8_t *, uint8_t *);
-void aes128_decrypt(struct aes128_ctx *, const uint8_t *, uint8_t *);
-void aes192_decrypt(struct aes192_ctx *, const uint8_t *, uint8_t *);
-void aes256_decrypt(struct aes256_ctx *, const uint8_t *, uint8_t *);
+void aes128_set_encrypt_key (struct aes128_ctx *, const uint8_t *);
+void aes192_set_encrypt_key (struct aes192_ctx *, const uint8_t *);
+void aes256_set_encrypt_key (struct aes256_ctx *, const uint8_t *);
+void aes128_set_decrypt_key (struct aes128_ctx *, const uint8_t *);
+void aes192_set_decrypt_key (struct aes192_ctx *, const uint8_t *);
+void aes256_set_decrypt_key (struct aes256_ctx *, const uint8_t *);
+void aes128_encrypt (struct aes128_ctx *, const uint8_t *, uint8_t *);
+void aes192_encrypt (struct aes192_ctx *, const uint8_t *, uint8_t *);
+void aes256_encrypt (struct aes256_ctx *, const uint8_t *, uint8_t *);
+void aes128_decrypt (struct aes128_ctx *, const uint8_t *, uint8_t *);
+void aes192_decrypt (struct aes192_ctx *, const uint8_t *, uint8_t *);
+void aes256_decrypt (struct aes256_ctx *, const uint8_t *, uint8_t *);
 
 #endif /* AES_H */
-

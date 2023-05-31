@@ -32,16 +32,16 @@
 #define MD4_DIGEST_SIZE 16
 #define MD4_BLOCK_SIZE 64
 
-struct md4_ctx {
-	uint32_t state[4];                 /* Hash state */
-	uint64_t count;                    /* Number of bits mod 2^64 */
-	uint8_t buffer[MD4_BLOCK_SIZE];    /* Input buffer */
+struct md4_ctx
+{
+  uint32_t state[4];              /* Hash state */
+  uint64_t count;                 /* Number of bits mod 2^64 */
+  uint8_t buffer[MD4_BLOCK_SIZE]; /* Input buffer */
 };
 
-void md4_init(struct md4_ctx *);
-void md4_transform(uint32_t *, const uint8_t *);
-void md4_update(struct md4_ctx *, const void *, size_t);
-void md4_final(uint8_t *, struct md4_ctx *);
+void md4_init (struct md4_ctx *);
+void md4_transform (uint32_t *, const uint8_t *);
+void md4_update (struct md4_ctx *, const void *, size_t);
+void md4_final (uint8_t *, struct md4_ctx *);
 
 #endif /* MD4_H */
-

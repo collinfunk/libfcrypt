@@ -28,7 +28,6 @@
 
 #include <stddef.h>
 
-void fcrypt_memzero(void *, size_t);
+void fcrypt_memzero (void *, size_t);
 
 #endif /* FCRYPT_MEMZERO_H */
-

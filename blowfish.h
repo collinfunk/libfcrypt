@@ -29,18 +29,18 @@
 #include <stddef.h>
 #include <stdint.h>
 
-struct blowfish_ctx {
-	uint32_t p[18];
-	uint32_t s[1024];
+struct blowfish_ctx
+{
+  uint32_t p[18];
+  uint32_t s[1024];
 };
 
-void blowfish_set_key(struct blowfish_ctx *, const uint8_t *, size_t);
-void blowfish_encipher(struct blowfish_ctx *, uint32_t *);
-void blowfish_decipher(struct blowfish_ctx *, uint32_t *);
-void blowfish_ecb_encrypt(struct blowfish_ctx *, const uint8_t *,
-		uint8_t *, size_t);
-void blowfish_ecb_decrypt(struct blowfish_ctx *, const uint8_t *,
-		uint8_t *, size_t);
+void blowfish_set_key (struct blowfish_ctx *, const uint8_t *, size_t);
+void blowfish_encipher (struct blowfish_ctx *, uint32_t *);
+void blowfish_decipher (struct blowfish_ctx *, uint32_t *);
+void blowfish_ecb_encrypt (struct blowfish_ctx *, const uint8_t *, uint8_t *,
+                           size_t);
+void blowfish_ecb_decrypt (struct blowfish_ctx *, const uint8_t *, uint8_t *,
+                           size_t);
 
 #endif /* BLOWFISH_H */
-

@@ -32,17 +32,17 @@
 #define MD2_DIGEST_SIZE 16
 #define MD2_BLOCK_SIZE 16
 
-struct md2_ctx {
-	uint8_t checksum[16];
-	uint8_t state[48];
-	size_t bufferlen;
-	uint8_t buffer[16];
+struct md2_ctx
+{
+  uint8_t checksum[16];
+  uint8_t state[48];
+  size_t bufferlen;
+  uint8_t buffer[16];
 };
 
-void md2_init(struct md2_ctx *);
-void md2_transform(struct md2_ctx *, const uint8_t *);
-void md2_update(struct md2_ctx *, const void *, size_t);
-void md2_final(uint8_t *, struct md2_ctx *);
+void md2_init (struct md2_ctx *);
+void md2_transform (struct md2_ctx *, const uint8_t *);
+void md2_update (struct md2_ctx *, const void *, size_t);
+void md2_final (uint8_t *, struct md2_ctx *);
 
 #endif /* MD2_H */
-

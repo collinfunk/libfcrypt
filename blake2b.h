@@ -40,21 +40,21 @@
 #define BLAKE2B_KEY_SIZE 64
 #define BLAKE2B_BLOCK_SIZE 128
 
-struct blake2b_ctx {
-	uint64_t state[8];
-	uint64_t t[2];
-	uint64_t f[2];
-	uint8_t buffer[BLAKE2B_BLOCK_SIZE];
-	size_t bufferlen;
-	size_t digestlen;
+struct blake2b_ctx
+{
+  uint64_t state[8];
+  uint64_t t[2];
+  uint64_t f[2];
+  uint8_t buffer[BLAKE2B_BLOCK_SIZE];
+  size_t bufferlen;
+  size_t digestlen;
 };
 
-void blake2b_init(struct blake2b_ctx *, size_t);
-void blake2b_init_key(struct blake2b_ctx *, size_t, const uint8_t *, size_t);
-void blake2b_update(struct blake2b_ctx *, const void *, size_t);
-void blake2b_final(uint8_t *, struct blake2b_ctx *);
-void blake2b(uint8_t *, const uint8_t *, const uint8_t *, const size_t,
-		const size_t, const size_t);
+void blake2b_init (struct blake2b_ctx *, size_t);
+void blake2b_init_key (struct blake2b_ctx *, size_t, const uint8_t *, size_t);
+void blake2b_update (struct blake2b_ctx *, const void *, size_t);
+void blake2b_final (uint8_t *, struct blake2b_ctx *);
+void blake2b (uint8_t *, const uint8_t *, const uint8_t *, const size_t,
+              const size_t, const size_t);
 
 #endif /* BLAKE2B_H */
-

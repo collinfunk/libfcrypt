@@ -35,23 +35,23 @@
 #define SHA224_DIGEST_SIZE 32
 #define SHA224_BLOCK_SIZE 64
 
-struct sha256_ctx {
-	uint32_t state[8];                   /* Hash state */
-	uint64_t count;                      /* Number of bits mod 2^64 */
-	uint8_t buffer[SHA256_BLOCK_SIZE];   /* Input buffer */
+struct sha256_ctx
+{
+  uint32_t state[8];                 /* Hash state */
+  uint64_t count;                    /* Number of bits mod 2^64 */
+  uint8_t buffer[SHA256_BLOCK_SIZE]; /* Input buffer */
 };
 
 /* SHA-256 */
-void sha256_init(struct sha256_ctx *);
-void sha256_transform(uint32_t *, const uint8_t *);
-void sha256_update(struct sha256_ctx *, const void *, size_t);
-void sha256_final(uint8_t *, struct sha256_ctx *);
+void sha256_init (struct sha256_ctx *);
+void sha256_transform (uint32_t *, const uint8_t *);
+void sha256_update (struct sha256_ctx *, const void *, size_t);
+void sha256_final (uint8_t *, struct sha256_ctx *);
 
 /* SHA-224 */
-void sha224_init(struct sha256_ctx *);
-void sha224_transform(uint32_t *, const uint8_t *);
-void sha224_update(struct sha256_ctx *, const void *, size_t);
-void sha224_final(uint8_t *, struct sha256_ctx *);
+void sha224_init (struct sha256_ctx *);
+void sha224_transform (uint32_t *, const uint8_t *);
+void sha224_update (struct sha256_ctx *, const void *, size_t);
+void sha224_final (uint8_t *, struct sha256_ctx *);
 
 #endif /* SHA256_H */
-

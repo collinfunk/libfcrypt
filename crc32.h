@@ -29,9 +29,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
-uint32_t crc32_update_base(uint32_t, const void *, size_t);
-uint32_t crc32_update(uint32_t, const void *, size_t);
-uint32_t crc32(const void *, size_t);
+uint32_t crc32_update_base (uint32_t, const void *, size_t);
+uint32_t crc32_update (uint32_t, const void *, size_t);
+uint32_t crc32 (const void *, size_t);
 
 #endif /* CRC32_H */
-
