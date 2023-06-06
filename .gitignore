@@ -1,62 +1,75 @@
 
+*.swp
+*.swo
 *~
-.swp
 tags
+TAGS
 
-# Archives
-*.tar.gz
-*.shar.gz
-*.tar.Z
-*.tar.bz2
-*.tar.lz
-*.tar.xz
-*.tar.zst
-*.zip
+.deps
+.libs
 
-# C objects and libraries
 *.o
 *.a
 *.so
 *.so.*
 
-# Precompiled headers
-*.gch
-*.pch
+*.la
+*.lo
 
-# Executables
-*.out
-*.bin
-*.elf
+*.log
+*.trs
 
-# Autoconf
-autom4te.cache
-aclocal.m4
-/compile
-config.h.in
-config.h
-/config.log
-/config.status
-/configure
-/depcomp
-/install-sh
-/missing
-stamp-*
-
-# Automake
-Makefile.in
-/ar-lib
-.deps/
-.dirstamp
-
-# Generated Makefiles
 Makefile
+Makefile.in
 
-# Should just build these in a subdirectory
-test-*
-!test-*.c
+autom4te.cache
+autoscan.log
+configure.scan
+aclocal.m4
+compile
+config.guess
+config.sub
+depcomp
+install-sh
+ltmain.sh
+missing
+config.h.in
+configure
+libtool.m4
+ltoptions.m4
+ltsugar.m4
+ltversion.m4
+lt~obsolete.m4
+config.h
+config.status
+libtool
+stamp-h1
+test-driver
 
-# Cmake
-build/
-_build/
-cmake-build-*/
+*.shar.gz
+*.tar.bz2
+*.tar.gz
+*.tar.lz
+*.tar.xz
+*.tar.zst
+*.zip
+
+test-aes
+test-arc4
+test-blake2b
+test-blake2s
+test-blowfish
+test-chacha
+test-crc32
+test-has160
+test-md2
+test-md4
+test-md5
+test-rmd128
+test-rmd160
+test-sha1
+test-sha256
+test-sha512
+test-siphash
+test-tiger
 
